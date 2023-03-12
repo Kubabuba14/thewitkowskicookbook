@@ -1,0 +1,81 @@
+.food {
+	display: inline-flex;
+	flex-wrap: wrap;
+	flex-direction: row;
+	justify-content: space-around;
+	margin: auto;
+	width: 100%;
+}
+
+.container1, .container2, .container3, .container4 {
+	position: relative;
+	margin: 25px;
+	cursor: pointer;
+}
+
+.image {
+	display:block;
+	width: 400px;
+	height: 600px;
+	object-fit: cover;
+}
+
+.overlay1, .overlay2, .overlay3, .overlay4 {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	width: 400px;
+	height: 600px;
+	opacity: 0;
+	transition: .5s ease;
+	background-color: #bbb;
+}
+
+.container1:hover .overlay1 {
+	opacity: 1;
+}
+
+.container2:hover .overlay2 {
+	opacity: 1;
+}
+
+.container3:hover .overlay3 {
+	opacity: 1;
+}
+
+.container4:hover .overlay4 {
+	opacity: 1;
+}
+
+.text {
+	color: white;
+	font-size: 20px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	text-align: center;
+}
+
+.welcome {
+	margin: 30px;
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+}
+
+.welcome h1 {
+	font-size: 35px;
+	text-align: center;
+	margin: 35px 0px 35px 0px;
+}
+
+.welcome p {
+	font-size: 28px;
+	text-align: center;
+	margin: 0px 0px 25px 0px;
+}
+
+.button {
+	margin: 0px 0px 40px 0px;
+}
