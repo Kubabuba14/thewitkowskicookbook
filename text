@@ -1,101 +1,94 @@
-Step 1: Set Up Power Query in Excel
-Open Excel and navigate to the Data tab.
-Click on Get Data > From Other Sources > From Web.
-Step 2: Configure API Access in Power Query
-In the From Web dialog box, enter the API URL https://toolkit-api.thenbs.com/ and click OK.
-Step 3: Handle Authentication
-You need to pass your ClientId and ClientSecret in the request headers. Power Query allows you to do this, but you'll have to script a bit.
+To connect to the NBS UNIclass REST API through Excel and retrieve data using Power Query (M Language), you need to create two queries in Power Query:
 
-In the Power Query Editor, go to Advanced Editor and enter the following M code:
+Query to Fetch Access Token.
+Query to Use Access Token and Retrieve Data from the API.
+Here’s how you can do it step-by-step:
+
+Step 1: Fetch Access Token
+Open Excel:
+
+Open Excel and go to the Data tab.
+Get Data from Web:
+
+Click on Get Data > From Other Sources > Blank Query.
+Open Advanced Editor:
+
+In the Power Query Editor, go to Home > Advanced Editor.
+Insert M Code to Fetch Access Token:
+
+Replace the placeholders with your actual API credentials.
 m
 Copy code
 let
-    // Define the URL and parameters
-    BaseUrl = "https://toolkit-api.thenbs.com/",
-    Endpoint = "endpoint_here", // Replace with the specific endpoint you want to access, e.g., "SsCodes" or "SLCodes"
+    // Define constants
+    clientId = "your_client_id_here",
+    clientSecret = "your_client_secret_here",
+    authorityUrl = "https://identity.thenbs.com/core/connect/token",
     
-    // Define your credentials
-    ClientId = "BRO",
-    ClientSecret = "SKI",
+    // Request body
+    requestBody = "grant_type=client_credentials&client_id=" & clientId & "&client_secret=" & clientSecret,
     
-    // Create the Authorization header
-    AuthHeader = "Basic " & Binary.ToText(Text.ToBinary(ClientId & ":" & ClientSecret), 0),
+    // Request headers
+    headers = [
+        #"Content-Type" = "application/x-www-form-urlencoded"
+    ],
     
-    // Make the API request
-    Source = Json.Document(Web.Contents(BaseUrl & Endpoint, [
-        Headers = [
-            #"Authorization" = AuthHeader,
-            #"Content-Type" = "application/json"
-        ]
-    ]))
+    // Fetch access token
+    tokenResponse = Web.Contents(authorityUrl, [
+        Content = Text.ToBinary(requestBody),
+        Headers = headers,
+        ManualStatusHandling = {400}
+    ]),
+    
+    // Parse JSON response
+    jsonResponse = Json.Document(tokenResponse),
+    accessToken = jsonResponse[access_token]
 in
-    Source
-Step 4: Testing the Connection
-Replace "endpoint_here" with the actual endpoint you're trying to access, like "SsCodes" or "SLCodes".
-Click Done to close the Advanced Editor.
-If you get an error at this stage, it means that either the URL or the credentials are incorrect. Ensure that the Base URL, endpoint, ClientId, and ClientSecret are correct.
+    accessToken
+Rename the Query:
+Rename this query to GetAccessToken by right-clicking on the query name in the Queries pane and selecting Rename.
+Step 2: Use Access Token to Fetch Data from the API
+Create a New Blank Query:
 
-Step 5: Handling OAuth2 (If required)
-If the API requires OAuth2 authentication instead of Basic authentication, you'll need to handle token fetching and passing it in the header. Here’s an example of how to do this:
+Go to Home > New Source > Blank Query.
+Open Advanced Editor:
 
-First, get the token by making a POST request to the OAuth2 token endpoint.
-Use the token in the header for subsequent API calls.
-Here’s an example M code for fetching a token and then using it to get data:
+In the Power Query Editor, go to Home > Advanced Editor.
+Insert M Code to Use Access Token and Fetch Data:
 
+Replace {notation} and {depth} with actual values or parameters.
 m
 Copy code
 let
-    // OAuth2 token endpoint
-    TokenUrl = "https://identity.thenbs.com/core/connect/token",
+    // Fetch access token (assuming previous step code is placed in a named query like GetAccessToken)
+    accessToken = GetAccessToken,
     
-    // Client credentials
-    ClientId = "BRO",
-    ClientSecret = "SKI",
+    // Define API endpoint (replace {notation} and {depth} with actual values)
+    notation = "your_notation_here",
+    depth = "your_depth_here",
+    apiUrl = "https://toolkit-api.thenbs.com/definitions/uniclass2015/" & notation & "/" & depth,
     
-    // Fetch the token
-    TokenResponse = Json.Document(Web.Contents(TokenUrl, [
-        Content = Text.ToBinary("client_id=" & ClientId & "&client_secret=" & ClientSecret & "&grant_type=client_credentials"),
-        Headers = [#"Content-Type" = "application/x-www-form-urlencoded"]
-    ])),
+    // Define request headers with the access token
+    headers = [
+        #"Authorization" = "Bearer " & accessToken,
+        #"Content-Type" = "application/json"
+    ],
     
-    // Extract the access token
-    AccessToken = TokenResponse[access_token],
+    // Fetch data from API
+    response = Web.Contents(apiUrl, [
+        Headers = headers
+    ]),
     
-    // Define the API endpoint
-    ApiUrl = "https://toolkit-api.thenbs.com/endpoint_here", // Replace with actual endpoint
-    
-    // Make the API request with the token
-    Source = Json.Document(Web.Contents(ApiUrl, [
-        Headers = [#"Authorization" = "Bearer " & AccessToken]
-    ]))
+    // Parse JSON response
+    jsonResponse = Json.Document(response),
+    table = Table.FromList(jsonResponse, Splitter.SplitByNothing(), null, null, ExtraValues.Error)
 in
-    Source
-Step 6: Finalizing and Testing
-Click Done to save the changes and load the data.
-Check if the data is pulled correctly.
-Creating a Menu in Excel
-Once you have successfully pulled data using Power Query, you can create a menu or a form using Excel's Developer tools to make selections and trigger different API calls.
+    table
+Modify API URL and Headers as Needed:
 
-If you're still having trouble with the connection, please provide any specific error messages you're encountering, and I can help you troubleshoot further.
+Ensure you correctly format the API URL and include any necessary parameters.
+Load Data into Excel:
 
-let
-    // Define the base URL and endpoint
-    BaseUrl = "https://toolkit-api.thenbs.com/definitions/uniclass2015/",
-    Notation = "Ss", // Replace with your desired notation
-    Depth = "1", // Replace with your desired depth
-
-    // Fetch OAuth2 token
-    TokenResponse = Json.Document(Web.Contents("https://identity.thenbs.com/core/connect/token", [
-        Content = Text.ToBinary("client_id=BRO&client_secret=SKI&grant_type=client_credentials"),
-        Headers = [#"Content-Type" = "application/x-www-form-urlencoded"]
-    ])),
-    
-    // Extract the access token from the response
-    AccessToken = TokenResponse[access_token],
-    
-    // Make the API request using the access token
-    Source = Json.Document(Web.Contents(BaseUrl & Notation & "/" & Depth, [
-        Headers = [#"Authorization" = "Bearer " & AccessToken]
-    ]))
-in
-    Source
+After transforming the data as needed, click Close & Load to load the data into an Excel worksheet.
+Conclusion
+By following these steps, you create a seamless connection to the NBS UNIclass REST API using Excel’s Power Query. This method allows you to fetch an access token and use it to authenticate subsequent requests to the API, enabling you to retrieve and analyze data directly in Excel.
