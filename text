@@ -1,0 +1,79 @@
+Step 1: Set Up Power Query in Excel
+Open Excel and navigate to the Data tab.
+Click on Get Data > From Other Sources > From Web.
+Step 2: Configure API Access in Power Query
+In the From Web dialog box, enter the API URL https://toolkit-api.thenbs.com/ and click OK.
+Step 3: Handle Authentication
+You need to pass your ClientId and ClientSecret in the request headers. Power Query allows you to do this, but you'll have to script a bit.
+
+In the Power Query Editor, go to Advanced Editor and enter the following M code:
+m
+Copy code
+let
+    // Define the URL and parameters
+    BaseUrl = "https://toolkit-api.thenbs.com/",
+    Endpoint = "endpoint_here", // Replace with the specific endpoint you want to access, e.g., "SsCodes" or "SLCodes"
+    
+    // Define your credentials
+    ClientId = "BRO",
+    ClientSecret = "SKI",
+    
+    // Create the Authorization header
+    AuthHeader = "Basic " & Binary.ToText(Text.ToBinary(ClientId & ":" & ClientSecret), 0),
+    
+    // Make the API request
+    Source = Json.Document(Web.Contents(BaseUrl & Endpoint, [
+        Headers = [
+            #"Authorization" = AuthHeader,
+            #"Content-Type" = "application/json"
+        ]
+    ]))
+in
+    Source
+Step 4: Testing the Connection
+Replace "endpoint_here" with the actual endpoint you're trying to access, like "SsCodes" or "SLCodes".
+Click Done to close the Advanced Editor.
+If you get an error at this stage, it means that either the URL or the credentials are incorrect. Ensure that the Base URL, endpoint, ClientId, and ClientSecret are correct.
+
+Step 5: Handling OAuth2 (If required)
+If the API requires OAuth2 authentication instead of Basic authentication, you'll need to handle token fetching and passing it in the header. Here’s an example of how to do this:
+
+First, get the token by making a POST request to the OAuth2 token endpoint.
+Use the token in the header for subsequent API calls.
+Here’s an example M code for fetching a token and then using it to get data:
+
+m
+Copy code
+let
+    // OAuth2 token endpoint
+    TokenUrl = "https://identity.thenbs.com/core/connect/token",
+    
+    // Client credentials
+    ClientId = "BRO",
+    ClientSecret = "SKI",
+    
+    // Fetch the token
+    TokenResponse = Json.Document(Web.Contents(TokenUrl, [
+        Content = Text.ToBinary("client_id=" & ClientId & "&client_secret=" & ClientSecret & "&grant_type=client_credentials"),
+        Headers = [#"Content-Type" = "application/x-www-form-urlencoded"]
+    ])),
+    
+    // Extract the access token
+    AccessToken = TokenResponse[access_token],
+    
+    // Define the API endpoint
+    ApiUrl = "https://toolkit-api.thenbs.com/endpoint_here", // Replace with actual endpoint
+    
+    // Make the API request with the token
+    Source = Json.Document(Web.Contents(ApiUrl, [
+        Headers = [#"Authorization" = "Bearer " & AccessToken]
+    ]))
+in
+    Source
+Step 6: Finalizing and Testing
+Click Done to save the changes and load the data.
+Check if the data is pulled correctly.
+Creating a Menu in Excel
+Once you have successfully pulled data using Power Query, you can create a menu or a form using Excel's Developer tools to make selections and trigger different API calls.
+
+If you're still having trouble with the connection, please provide any specific error messages you're encountering, and I can help you troubleshoot further.
