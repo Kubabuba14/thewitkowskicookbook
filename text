@@ -77,3 +77,25 @@ Creating a Menu in Excel
 Once you have successfully pulled data using Power Query, you can create a menu or a form using Excel's Developer tools to make selections and trigger different API calls.
 
 If you're still having trouble with the connection, please provide any specific error messages you're encountering, and I can help you troubleshoot further.
+
+let
+    // Define the base URL and endpoint
+    BaseUrl = "https://toolkit-api.thenbs.com/definitions/uniclass2015/",
+    Notation = "Ss", // Replace with your desired notation
+    Depth = "1", // Replace with your desired depth
+
+    // Fetch OAuth2 token
+    TokenResponse = Json.Document(Web.Contents("https://identity.thenbs.com/core/connect/token", [
+        Content = Text.ToBinary("client_id=BRO&client_secret=SKI&grant_type=client_credentials"),
+        Headers = [#"Content-Type" = "application/x-www-form-urlencoded"]
+    ])),
+    
+    // Extract the access token from the response
+    AccessToken = TokenResponse[access_token],
+    
+    // Make the API request using the access token
+    Source = Json.Document(Web.Contents(BaseUrl & Notation & "/" & Depth, [
+        Headers = [#"Authorization" = "Bearer " & AccessToken]
+    ]))
+in
+    Source
